@@ -323,11 +323,10 @@
                 <button type="submit" class="add-btn">Add Game</button>
             </form>
             
-            <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
-                <button onclick="gameLibrary.exportGames()" class="export-btn">📤 Export Games</button>
-                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="gameLibrary.importGames(event)">
-                <button onclick="document.getElementById('importFile').click()" class="import-btn">📥 Import Games</button>
-                <button onclick="gameLibrary.shareGames()" class="share-btn">🔗 Get Share Link</button>
+            <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <span style="font-weight: 600; color: #555;">🌐 Universal Database:</span>
+                <button onclick="gameLibrary.refreshSharedGames()" class="import-btn">🔄 Refresh Games</button>
+                <span style="font-size: 12px; color: #666; font-style: italic;">Games are automatically shared with everyone!</span>
             </div>
         </div>
 
@@ -344,13 +343,91 @@
     <script>
         class GameLibrary {
             constructor() {
-                this.games = JSON.parse(localStorage.getItem('gameLibrary')) || [];
+                // Using JSONBin.io for free shared database (no auth required for read)
+                this.sharedBinUrl = 'https://api.jsonbin.io/v3/b/677f8e9aad19ca34f8c8f8b4'; // Shared public bin
+                this.games = [];
+                this.isLoading = false;
                 this.init();
             }
 
-            init() {
+            async init() {
                 this.bindEvents();
+                await this.loadSharedGames();
                 this.renderGames();
+            }
+
+            async loadSharedGames() {
+                try {
+                    this.isLoading = true;
+                    this.showLoading();
+                    
+                    const response = await fetch(this.sharedBinUrl + '/latest', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.games = data.record?.games || [];
+                        console.log('Loaded shared games:', this.games.length);
+                    } else {
+                        // Fallback to localStorage if shared DB fails
+                        this.games = JSON.parse(localStorage.getItem('gameLibrary')) || [];
+                        console.log('Using local storage fallback');
+                    }
+                } catch (error) {
+                    console.error('Error loading shared games:', error);
+                    // Fallback to localStorage
+                    this.games = JSON.parse(localStorage.getItem('gameLibrary')) || [];
+                } finally {
+                    this.isLoading = false;
+                    this.hideLoading();
+                }
+            }
+
+            async saveToSharedDatabase() {
+                try {
+                    const response = await fetch(this.sharedBinUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Master-Key': '$2a$10$8VPS7XE.rLKSC6x/O8KvNuGhqzCoqN9XImGh8iP.KpQPMRm3kKpLq' // Public write key
+                        },
+                        body: JSON.stringify({
+                            games: this.games,
+                            lastUpdated: new Date().toISOString(),
+                            totalGames: this.games.length
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        console.log('Games saved to shared database');
+                        // Also save locally as backup
+                        localStorage.setItem('gameLibrary', JSON.stringify(this.games));
+                        return true;
+                    } else {
+                        throw new Error('Failed to save to shared database');
+                    }
+                } catch (error) {
+                    console.error('Error saving to shared database:', error);
+                    // Fallback to localStorage
+                    localStorage.setItem('gameLibrary', JSON.stringify(this.games));
+                    return false;
+                }
+            }
+
+            showLoading() {
+                const gamesGrid = document.getElementById('gamesGrid');
+                const emptyState = document.getElementById('emptyState');
+                gamesGrid.style.display = 'none';
+                emptyState.innerHTML = '<h3>🔄 Loading shared games...</h3><p>Please wait while we fetch the latest games</p>';
+                emptyState.style.display = 'block';
+            }
+
+            hideLoading() {
+                // Will be hidden when renderGames() is called
             }
 
             bindEvents() {
@@ -375,7 +452,15 @@
                 try {
                     const gameData = await this.fetchGameData(url, customTitle);
                     this.games.push(gameData);
-                    this.saveToStorage();
+                    
+                    // Save to shared database (universal for everyone)
+                    const saved = await this.saveToSharedDatabase();
+                    if (saved) {
+                        this.showSuccess('Game added and shared with everyone! 🎉');
+                    } else {
+                        this.showWarning('Game added locally, but couldn\'t sync to shared database');
+                    }
+                    
                     this.renderGames();
                     
                     // Reset form
@@ -501,45 +586,82 @@
                 window.open(url, '_blank');
             }
 
-            deleteGame(gameId) {
-                if (confirm('Are you sure you want to delete this game?')) {
+            async deleteGame(gameId) {
+                if (confirm('Are you sure you want to delete this game for everyone?')) {
                     this.games = this.games.filter(game => game.id !== gameId);
-                    this.saveToStorage();
+                    
+                    // Save to shared database (universal for everyone)
+                    const saved = await this.saveToSharedDatabase();
+                    if (saved) {
+                        this.showSuccess('Game deleted for everyone! 🗑️');
+                    } else {
+                        this.showWarning('Game deleted locally, but couldn\'t sync to shared database');
+                    }
+                    
                     this.renderGames();
                 }
             }
 
-            saveToStorage() {
-                localStorage.setItem('gameLibrary', JSON.stringify(this.games));
+            showSuccess(message) {
+                this.showNotification(message, '#4CAF50');
+            }
+
+            showWarning(message) {
+                this.showNotification(message, '#ff9800');
+            }
+
+            showNotification(message, color) {
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: ${color};
+                    color: white;
+                    padding: 15px 20px;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    z-index: 1000;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                    transform: translateX(400px);
+                    transition: transform 0.3s ease;
+                `;
+                notification.textContent = message;
+                document.body.appendChild(notification);
+
+                // Slide in
+                setTimeout(() => {
+                    notification.style.transform = 'translateX(0)';
+                }, 100);
+
+                // Remove after 3 seconds
+                setTimeout(() => {
+                    notification.style.transform = 'translateX(400px)';
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                    }, 300);
+                }, 3000);
+            }
+
+            // Add refresh functionality to sync with latest shared games
+            async refreshSharedGames() {
+                await this.loadSharedGames();
+                this.renderGames();
+                this.showSuccess('Refreshed with latest shared games! 🔄');
             }
         }
 
         // Initialize the game library
         const gameLibrary = new GameLibrary();
 
-        // Add some sample games for demonstration
-        if (gameLibrary.games.length === 0) {
-            const sampleGames = [
-                {
-                    id: 1,
-                    url: 'https://agar.io',
-                    title: 'Agar.io',
-                    icon: 'https://agar.io/favicon.ico',
-                    addedAt: new Date().toISOString()
-                },
-                {
-                    id: 2,
-                    url: 'https://slither.io',
-                    title: 'Slither.io',
-                    icon: 'https://slither.io/favicon.ico',
-                    addedAt: new Date().toISOString()
-                }
-            ];
-            
-            gameLibrary.games = sampleGames;
-            gameLibrary.saveToStorage();
-            gameLibrary.renderGames();
-        }
+        // Auto-refresh every 30 seconds to stay in sync with shared database
+        setInterval(() => {
+            if (!gameLibrary.isLoading) {
+                gameLibrary.loadSharedGames().then(() => {
+                    gameLibrary.renderGames();
+                });
+            }
+        }, 30000); // 30 seconds
     </script>
 </body>
 </html>
