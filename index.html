@@ -289,6 +289,13 @@
                 </div>
                 <button type="submit" class="add-btn">Add Game</button>
             </form>
+            
+            <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                <button onclick="gameLibrary.exportGames()" class="export-btn">📤 Export Games</button>
+                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="gameLibrary.importGames(event)">
+                <button onclick="document.getElementById('importFile').click()" class="import-btn">📥 Import Games</button>
+                <button onclick="gameLibrary.shareGames()" class="share-btn">🔗 Get Share Link</button>
+            </div>
         </div>
 
         <div class="games-grid" id="gamesGrid">
