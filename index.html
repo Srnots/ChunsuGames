@@ -100,6 +100,39 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
+        .export-btn, .import-btn, .share-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .import-btn {
+            background: #17a2b8;
+        }
+
+        .share-btn {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .export-btn:hover {
+            background: #218838;
+        }
+
+        .import-btn:hover {
+            background: #138496;
+        }
+
+        .share-btn:hover {
+            background: #e0a800;
+        }
+
         .games-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
