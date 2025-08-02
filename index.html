@@ -233,8 +233,36 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
 
+/* Change these values in your existing CSS */
+
+.game-icon {
+    width: 120px;      /* Increased from 80px */
+    height: 120px;     /* Increased from 80px */
+    border-radius: 15px;  /* Optionally increase border radius proportionally */
+    object-fit: cover;
+    border: 4px solid white;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    background: white;
+    transition: var(--transition);
+}
+
+.game-icon-fallback {
+    width: 120px;      /* Increased from 80px */
+    height: 120px;     /* Increased from 80px */
+    background: var(--primary);
+    border-radius: 15px;  /* Optionally increase border radius proportionally */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 3.5rem;   /* Increased from 2.5rem to scale with icon size */
+    font-weight: bold;
+    border: 4px solid white;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
         .game-icon-container {
-            height: 160px;
+            height: 180px;     /* Increased from 160px to accommodate larger icons */
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             display: flex;
             align-items: center;
@@ -242,37 +270,10 @@
             position: relative;
             overflow: hidden;
         }
-
-        .game-icon {
-            width: 80px;
-            height: 80px;
-            border-radius: 12px;
-            object-fit: cover;
-            border: 4px solid white;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-            background: white;
-            transition: var(--transition);
-        }
-
+        
         .game-card:hover .game-icon {
             transform: scale(1.1);
         }
-
-        .game-icon-fallback {
-            width: 80px;
-            height: 80px;
-            background: var(--primary);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 2.5rem;
-            font-weight: bold;
-            border: 4px solid white;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        }
-
         .game-info {
             padding: 20px;
             flex-grow: 1;
