@@ -51,6 +51,18 @@
             animation: backgroundMove 20s ease-in-out infinite;
         }
 
+        body::after {
+          content: '';
+          position: fixed;
+          top: 0; left: 0;
+          width: 100%; height: 100%;
+          background: url("https://media.discordapp.net/attachments/1284178780969107521/1401152889635733585/IMG_0904.jpg?format=webp&width=646&height=646")
+          center/cover no-repeat;
+          opacity: 0.2;      /* fiddle this between 0 (invisible) and 1 (full-strength) */
+          z-index: -2;       /* sit underneath all your content & under the ::before gradients */
+          pointer-events: none; /* so clicks still hit real buttons */
+}
+
         @keyframes backgroundMove {
             0%, 100% { transform: translateX(0) translateY(0); }
             25% { transform: translateX(-10px) translateY(-10px); }
